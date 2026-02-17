@@ -10,7 +10,8 @@
  *   0x0001 (1)   - Temperature   [0.1 °C,  S_WORD]              (R)
  *   0x0064 (100) - Slave ID      [1–247]                        (R/W)
  *   0x0065 (101) - Baud Rate     [0=2400,1=4800,2=9600,3=19200] (R/W)
- *   0x0066 (102) - LED mode      [0=off, 1=on, 2=auto]          (R/W)
+ *   0x0066 (102) - LED mode      [0=off, 1=on, 2=auto, when Modbus
+ * communication is active]                                      (R/W)
  *   0x0067 (103) - FW version    [e.g. 0x0001 = v0.1]           (R)
  *   0x0068 (104) - Temp cal      [0.1 °C offset, S_WORD]        (R/W)
  *   0x0069 (105) - Hum cal       [0.1 %RH offset, S_WORD]       (R/W)

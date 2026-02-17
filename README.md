@@ -27,8 +27,8 @@ Defaults: address **1**, baud **9600**, LED **auto**.
 ### Linux (Ubuntu/Debian)
 
 ```bash
-sudo apt install gcc-avr avr-libc
-pip install pymcuprog
+# One-command install (gcc-avr + avr-libc + ATtiny402 DFP + pymcuprog)
+./setup_toolchain.sh
 
 make            # compile
 make size       # check size (max 4KB flash / 256B RAM)
