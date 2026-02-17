@@ -1,0 +1,63 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install AVR toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-avr avr-libc
+
+      - name: Build firmware
+        run: make
+
+      - name: Show firmware size
+        run: make size
+
+      - name: Upload HEX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sht40_modbus-${{ github.sha }}
+          path: sht40_modbus.hex
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install AVR toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-avr avr-libc
+
+      - name: Build firmware
+        run: make
+
+      - name: Rename HEX with version
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          cp sht40_modbus.hex "boneio-edge-temp-${VERSION}.hex"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: boneio-edge-temp-*.hex
+          generate_release_notes: true
