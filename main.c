@@ -303,11 +303,13 @@ static bool sht40_read(int16_t *temp_out, int16_t *hum_out) {
   uint16_t t_raw = ((uint16_t)t_msb << 8) | t_lsb;
   uint16_t h_raw = ((uint16_t)h_msb << 8) | h_lsb;
 
-  /* Convert to 0.1 °C:  T = (175 * t_raw / 65535 - 45) * 10 */
-  int32_t t_val = ((int32_t)17500 * t_raw) / 65535 - 4500;
+  /* Convert to 0.1 °C:  T = (175 * t_raw / 65535 - 45) * 10
+   *                        = 1750 * t_raw / 65535 - 450          */
+  int32_t t_val = ((int32_t)1750 * t_raw) / 65535 - 450;
 
-  /* Convert to 0.1 %RH: H = (125 * h_raw / 65535 -  6) * 10 */
-  int32_t h_val = ((int32_t)12500 * h_raw) / 65535 - 600;
+  /* Convert to 0.1 %RH: H = (125 * h_raw / 65535 -  6) * 10
+   *                        = 1250 * h_raw / 65535 -  60          */
+  int32_t h_val = ((int32_t)1250 * h_raw) / 65535 - 60;
 
   /* Clamp humidity to 0.0–100.0 % */
   if (h_val < 0)
