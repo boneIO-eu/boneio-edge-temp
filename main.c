@@ -729,7 +729,6 @@ int main(void) {
         if (tc > 1250)
           tc = 1250;
         reg_temperature = tc;
-        led_blink();
       }
     }
 

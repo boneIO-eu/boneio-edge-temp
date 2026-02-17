@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  DFP_VERSION: "3.1.260"
+  DFP_URL: "https://packs.download.microchip.com/Microchip.ATtiny_DFP.3.1.260.atpack"
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -15,11 +19,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install AVR toolchain
+      - name: Install AVR toolchain + ATtiny DFP
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-avr avr-libc
+          sudo apt-get install -y gcc-avr avr-libc binutils-avr
           avr-gcc --version
+
+          # ATtiny402 needs device specs from Microchip ATtiny DFP
+          wget -q "$DFP_URL" -O /tmp/attiny-dfp.zip
+          mkdir -p /tmp/attiny-dfp
+          unzip -q /tmp/attiny-dfp.zip -d /tmp/attiny-dfp
+
+          # Find gcc specs directory
+          GCC_DIR=$(find /usr/lib/gcc/avr -maxdepth 1 -type d | tail -1)
+
+          # Copy device specs, headers, and libs
+          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/device-specs/specs-attiny402 "$GCC_DIR/device-specs/"
+          sudo cp /tmp/attiny-dfp/include/avr/iotn402.h /usr/lib/avr/include/avr/
+          sudo mkdir -p /usr/lib/avr/lib/avrxmega3/short-calls
+          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/avrxmega3/*.{a,o} /usr/lib/avr/lib/avrxmega3/ 2>/dev/null || true
+          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/avrxmega3/short-calls/*.{a,o} /usr/lib/avr/lib/avrxmega3/short-calls/ 2>/dev/null || true
 
       - name: Build firmware
         run: make
@@ -44,10 +63,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install AVR toolchain
+      - name: Install AVR toolchain + ATtiny DFP
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-avr avr-libc
+          sudo apt-get install -y gcc-avr avr-libc binutils-avr
+          wget -q "$DFP_URL" -O /tmp/attiny-dfp.zip
+          mkdir -p /tmp/attiny-dfp
+          unzip -q /tmp/attiny-dfp.zip -d /tmp/attiny-dfp
+          GCC_DIR=$(find /usr/lib/gcc/avr -maxdepth 1 -type d | tail -1)
+          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/device-specs/specs-attiny402 "$GCC_DIR/device-specs/"
+          sudo cp /tmp/attiny-dfp/include/avr/iotn402.h /usr/lib/avr/include/avr/
+          sudo mkdir -p /usr/lib/avr/lib/avrxmega3/short-calls
+          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/avrxmega3/*.{a,o} /usr/lib/avr/lib/avrxmega3/ 2>/dev/null || true
+          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/avrxmega3/short-calls/*.{a,o} /usr/lib/avr/lib/avrxmega3/short-calls/ 2>/dev/null || true
 
       - name: Build firmware
         run: make

@@ -41,11 +41,23 @@ Connect a UPDI programmer (e.g. UPDI Friend, SerialUPDI) to UPDI pin (PA0) on he
 
 > ⚠️ **Remove R20 (470Ω)** from the UPDI line and replace with a solder bridge — the UPDI Friend already has its own resistor.
 
-Default port: `/dev/ttyUSB1`. To change:
+**Linux** (default port `/dev/ttyUSB1`):
 
 ```bash
-pymcuprog write -t uart -u /dev/ttyACM0 -d attiny402 -f sht40_modbus.hex --erase --verify
+pymcuprog write -t uart -u /dev/ttyUSB1 -d attiny402 -f sht40_modbus.hex --erase --verify
 ```
+
+**Windows** — no compiler needed, just flash the `.hex` from GitHub Releases:
+
+```powershell
+# Install pymcuprog (requires Python 3)
+pip install pymcuprog
+
+# Flash (replace COM3 with your port from Device Manager)
+pymcuprog write -t uart -u COM3 -d attiny402 -f boneio-edge-temp-v0.1.hex --erase --verify
+```
+
+> 💡 Find your COM port in **Device Manager → Ports (COM & LPT)** after plugging in the UPDI programmer.
 
 ### VSCode
 
