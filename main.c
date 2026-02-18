@@ -42,7 +42,7 @@
  *  Configuration
  * ═══════════════════════════════════════════════════════════════ */
 
-#define FW_VERSION 0x0001 /* v0.1 — high byte = major, low = minor */
+#define FW_VERSION 0x0002 /* v0.2 — high byte = major, low = minor */
 
 #define DEFAULT_SLAVE_ID 1
 #define DEFAULT_BAUD_IDX 2 /* 9600 */
