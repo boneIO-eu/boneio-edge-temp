@@ -17,6 +17,8 @@ SHT40 temperature & humidity sensor on ATtiny402 with Modbus RTU over RS-485.
 
 Defaults: address **1**, baud **9600**, LED **auto**.
 
+**Broadcast** (address 0): FC 0x06 write to any writable register — all devices on the bus apply the change simultaneously, no response is sent. Useful for switching baud rate on all sensors at once.
+
 ## Build
 
 ### Requirements
@@ -125,6 +127,8 @@ See [LICENSE](LICENSE).
 | 105   | Hum cal     | 0.1 %RH   | R/W | Offset kalibracji wilg. (±50.0)     |
 
 Domyślnie: adres **1**, baudrate **9600**, LED **auto**.
+
+**Broadcast** (adres 0): FC 0x06 zapis do dowolnego rejestru R/W — wszystkie urządzenia na magistrali zastosują zmianę jednocześnie, bez odpowiedzi. Przydatne np. do zmiany baud rate na wszystkich czujnikach naraz.
 
 ## Kompilacja i flashowanie
 

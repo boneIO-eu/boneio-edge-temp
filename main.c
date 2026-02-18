@@ -16,6 +16,9 @@
  *   0x0068 (104) - Temp cal      [0.1 °C offset, S_WORD]        (R/W)
  *   0x0069 (105) - Hum cal       [0.1 %RH offset, S_WORD]       (R/W)
  *
+ * Broadcast (address 0): FC 0x06 write to writable registers.
+ *   No response is sent (per Modbus spec).
+ *
  * Hardware (boneIO edge-temp PCB):
  *   PA1 = SDA  (soft I2C → SHT40, 47Ω series, 4.7kΩ pull-up)
  *   PA2 = SCL  (soft I2C → SHT40, 47Ω series, 4.7kΩ pull-up)
@@ -478,8 +481,9 @@ static void process_modbus(void) {
   if (len < 6)
     return;
 
-  /* Address check */
-  if (rx_buf[0] != slave_id)
+  /* Address check: accept own address or broadcast (0) */
+  bool is_broadcast = (rx_buf[0] == 0);
+  if (!is_broadcast && rx_buf[0] != slave_id)
     return;
 
   /* CRC check */
@@ -489,8 +493,14 @@ static void process_modbus(void) {
 
   uint8_t func = rx_buf[1];
 
-  /* Turnaround delay for RS485 */
-  _delay_ms(2);
+  /* Broadcast only supports write operations (per Modbus spec) */
+  if (is_broadcast && func != FC_WRITE_SINGLE) {
+    return; /* silently ignore reads on broadcast */
+  }
+
+  /* Turnaround delay for RS485 (skip for broadcast — no response) */
+  if (!is_broadcast)
+    _delay_ms(2);
 
   switch (func) {
 
@@ -542,24 +552,30 @@ static void process_modbus(void) {
 
     case REG_SLAVE_ID:
       if (value < 1 || value > 247) {
-        mb_exception(func, EXC_ILLEGAL_VALUE);
+        if (!is_broadcast)
+          mb_exception(func, EXC_ILLEGAL_VALUE);
         break;
       }
-      /* Echo response with OLD address first */
-      mb_send_raw((const uint8_t *)rx_buf, 8);
-      _delay_ms(5);
+      /* Echo response with OLD address first (skip on broadcast) */
+      if (!is_broadcast) {
+        mb_send_raw((const uint8_t *)rx_buf, 8);
+        _delay_ms(5);
+      }
       slave_id = (uint8_t)value;
       eeprom_update_byte((uint8_t *)EEPROM_ADDR_ID, slave_id);
       break;
 
     case REG_BAUDRATE:
       if (value >= BAUD_COUNT) {
-        mb_exception(func, EXC_ILLEGAL_VALUE);
+        if (!is_broadcast)
+          mb_exception(func, EXC_ILLEGAL_VALUE);
         break;
       }
-      /* Echo response at OLD baud rate first */
-      mb_send_raw((const uint8_t *)rx_buf, 8);
-      _delay_ms(5);
+      /* Echo response at OLD baud rate first (skip on broadcast) */
+      if (!is_broadcast) {
+        mb_send_raw((const uint8_t *)rx_buf, 8);
+        _delay_ms(5);
+      }
       baud_idx = (uint8_t)value;
       eeprom_update_byte((uint8_t *)EEPROM_ADDR_BAUD, baud_idx);
       USART0.BAUD = uart_baud_reg[baud_idx];
@@ -568,54 +584,63 @@ static void process_modbus(void) {
 
     case REG_LED_MODE:
       if (value > LED_AUTO) {
-        mb_exception(func, EXC_ILLEGAL_VALUE);
+        if (!is_broadcast)
+          mb_exception(func, EXC_ILLEGAL_VALUE);
         break;
       }
       led_mode = (uint8_t)value;
       eeprom_update_byte((uint8_t *)EEPROM_ADDR_LED, led_mode);
       led_apply_mode();
-      /* Echo response */
-      mb_send_raw((const uint8_t *)rx_buf, 8);
+      if (!is_broadcast)
+        mb_send_raw((const uint8_t *)rx_buf, 8);
       break;
 
     case REG_FW_VERSION:
       /* Read-only register */
-      mb_exception(func, EXC_ILLEGAL_ADDR);
+      if (!is_broadcast)
+        mb_exception(func, EXC_ILLEGAL_ADDR);
       break;
 
     case REG_CAL_TEMP: {
       int16_t sv = (int16_t)value;
       if (sv < -CAL_MAX || sv > CAL_MAX) {
-        mb_exception(func, EXC_ILLEGAL_VALUE);
+        if (!is_broadcast)
+          mb_exception(func, EXC_ILLEGAL_VALUE);
         break;
       }
       cal_temp = sv;
       eeprom_update_word((uint16_t *)EEPROM_ADDR_CAL_T, (uint16_t)cal_temp);
-      mb_send_raw((const uint8_t *)rx_buf, 8);
+      if (!is_broadcast)
+        mb_send_raw((const uint8_t *)rx_buf, 8);
       break;
     }
 
     case REG_CAL_HUM: {
       int16_t sv = (int16_t)value;
       if (sv < -CAL_MAX || sv > CAL_MAX) {
-        mb_exception(func, EXC_ILLEGAL_VALUE);
+        if (!is_broadcast)
+          mb_exception(func, EXC_ILLEGAL_VALUE);
         break;
       }
       cal_hum = sv;
       eeprom_update_word((uint16_t *)EEPROM_ADDR_CAL_H, (uint16_t)cal_hum);
-      mb_send_raw((const uint8_t *)rx_buf, 8);
+      if (!is_broadcast)
+        mb_send_raw((const uint8_t *)rx_buf, 8);
       break;
     }
 
     default:
-      mb_exception(func, EXC_ILLEGAL_ADDR);
+      if (!is_broadcast)
+        mb_exception(func, EXC_ILLEGAL_ADDR);
       break;
     }
+    led_blink();
     break;
   }
 
   default:
-    mb_exception(func, EXC_ILLEGAL_FUNC);
+    if (!is_broadcast)
+      mb_exception(func, EXC_ILLEGAL_FUNC);
     break;
   }
 }
