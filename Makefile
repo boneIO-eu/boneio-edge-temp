@@ -28,7 +28,7 @@ $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
 
 size: $(TARGET).elf
-	$(SIZE) --mcu=$(MCU) -C $<
+	@if $(SIZE) --mcu=$(MCU) -C $< 2>/dev/null; then :; else $(SIZE) -B $<; fi
 
 clean:
 	rm -f $(TARGET).elf $(TARGET).hex
