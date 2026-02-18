@@ -4,16 +4,16 @@ SHT40 temperature & humidity sensor on ATtiny402 with Modbus RTU over RS-485.
 
 ## Register Map
 
-| Addr | Name        | Unit    | R/W | Description                          |
-| ---- | ----------- | ------- | --- | ------------------------------------ |
-| 0    | Humidity    | 0.1 %RH | R   | Humidity (S_WORD, `× 0.1` = %)       |
-| 1    | Temperature | 0.1 °C  | R   | Temperature (S_WORD, `× 0.1` = °C)   |
-| 100  | Slave ID    | 1–247   | R/W | Modbus address                       |
-| 101  | Baud Rate   | 0–3     | R/W | 0=2400, 1=4800, **2=9600**, 3=19200  |
-| 102  | LED mode    | 0–2     | R/W | 0=off, 1=on, **2=auto**              |
-| 103  | FW version  | —       | R   | e.g. `0x0001` = v0.1                 |
-| 104  | Temp cal    | 0.1 °C  | R/W | Temperature calibration offset (±50) |
-| 105  | Hum cal     | 0.1 %RH | R/W | Humidity calibration offset (±50)    |
+| Addr | Name        | Unit    | R/W | Description                           |
+| ---- | ----------- | ------- | --- | ------------------------------------- |
+| 0    | Humidity    | 0.1 %RH | R   | Humidity (S_WORD, `× 0.1` = %)        |
+| 1    | Temperature | 0.1 °C  | R   | Temperature (S_WORD, `× 0.1` = °C)    |
+| 100  | Slave ID    | 1–247   | R/W | Modbus address                        |
+| 101  | Baud Rate   | 0–3     | R/W | 0=2400, 1=4800, **2=9600**, 3=19200   |
+| 102  | LED mode    | 0–3     | R/W | 0=off, 1=on, **2=beacon**, **3=auto** |
+| 103  | FW version  | —       | R   | e.g. `0x0001` = v0.1                  |
+| 104  | Temp cal    | 0.1 °C  | R/W | Temperature calibration offset (±50)  |
+| 105  | Hum cal     | 0.1 %RH | R/W | Humidity calibration offset (±50)     |
 
 Defaults: address **1**, baud **9600**, LED **auto**.
 
@@ -115,16 +115,16 @@ See [LICENSE](LICENSE).
 
 ## Mapa rejestrów
 
-| Adres | Nazwa       | Jednostka | R/W | Opis                                |
-| ----- | ----------- | --------- | --- | ----------------------------------- |
-| 0     | Humidity    | 0.1 %RH   | R   | Wilgotność (S_WORD, `× 0.1` = %)    |
-| 1     | Temperature | 0.1 °C    | R   | Temperatura (S_WORD, `× 0.1` = °C)  |
-| 100   | Slave ID    | 1–247     | R/W | Adres Modbus                        |
-| 101   | Baud Rate   | 0–3       | R/W | 0=2400, 1=4800, **2=9600**, 3=19200 |
-| 102   | LED mode    | 0–2       | R/W | 0=off, 1=on, **2=auto**             |
-| 103   | FW version  | —         | R   | Np. `0x0001` = v0.1                 |
-| 104   | Temp cal    | 0.1 °C    | R/W | Offset kalibracji temp (±50.0)      |
-| 105   | Hum cal     | 0.1 %RH   | R/W | Offset kalibracji wilg. (±50.0)     |
+| Adres | Nazwa       | Jednostka | R/W | Opis                                  |
+| ----- | ----------- | --------- | --- | ------------------------------------- |
+| 0     | Humidity    | 0.1 %RH   | R   | Wilgotność (S_WORD, `× 0.1` = %)      |
+| 1     | Temperature | 0.1 °C    | R   | Temperatura (S_WORD, `× 0.1` = °C)    |
+| 100   | Slave ID    | 1–247     | R/W | Adres Modbus                          |
+| 101   | Baud Rate   | 0–3       | R/W | 0=2400, 1=4800, **2=9600**, 3=19200   |
+| 102   | LED mode    | 0–3       | R/W | 0=off, 1=on, **2=beacon**, **3=auto** |
+| 103   | FW version  | —         | R   | Np. `0x0001` = v0.1                   |
+| 104   | Temp cal    | 0.1 °C    | R/W | Offset kalibracji temp (±50.0)        |
+| 105   | Hum cal     | 0.1 %RH   | R/W | Offset kalibracji wilg. (±50.0)       |
 
 Domyślnie: adres **1**, baudrate **9600**, LED **auto**.
 

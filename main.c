@@ -10,8 +10,9 @@
  *   0x0001 (1)   - Temperature   [0.1 °C,  S_WORD]              (R)
  *   0x0064 (100) - Slave ID      [1–247]                        (R/W)
  *   0x0065 (101) - Baud Rate     [0=2400,1=4800,2=9600,3=19200] (R/W)
- *   0x0066 (102) - LED mode      [0=off, 1=on, 2=auto, when Modbus
- * communication is active]                                      (R/W)
+ *   0x0066 (102) - LED mode      [0=off, 1=on, 2=beacon, 3=auto] (R/W)
+ *                                 beacon = periodic blink (~3s)
+ *                                 auto   = blink on Modbus activity
  *   0x0067 (103) - FW version    [e.g. 0x0001 = v0.1]           (R)
  *   0x0068 (104) - Temp cal      [0.1 °C offset, S_WORD]        (R/W)
  *   0x0069 (105) - Hum cal       [0.1 %RH offset, S_WORD]       (R/W)
@@ -49,7 +50,7 @@
 
 #define DEFAULT_SLAVE_ID 1
 #define DEFAULT_BAUD_IDX 2 /* 9600 */
-#define DEFAULT_LED_MODE 2 /* auto */
+#define DEFAULT_LED_MODE 3 /* auto */
 
 #define EEPROM_ADDR_ID 0x00
 #define EEPROM_ADDR_BAUD 0x01
@@ -91,7 +92,8 @@
 /* LED modes */
 #define LED_OFF 0
 #define LED_ON 1
-#define LED_AUTO 2
+#define LED_BEACON 2
+#define LED_AUTO 3
 
 /* Measurement interval: ~3 seconds (loop iterations) */
 #define MEASURE_INTERVAL 30000U
@@ -152,17 +154,25 @@ static inline void led_hw_off(void) { PORTA.OUTSET = (1 << LED_PIN); }
 static void led_apply_mode(void) {
   if (led_mode == LED_ON)
     led_hw_on();
-  else if (led_mode == LED_OFF)
-    led_hw_off();
-  /* LED_AUTO: managed by blink calls */
+  else
+    led_hw_off(); /* OFF, BEACON, AUTO — LED off by default */
 }
 
-/* Blink LED only in AUTO mode */
+/* Blink LED on Modbus activity (AUTO mode only) */
 static void led_blink(void) {
   if (led_mode != LED_AUTO)
     return;
   led_hw_on();
   _delay_ms(50);
+  led_hw_off();
+}
+
+/* Beacon blink — called from main loop every ~3s */
+static void led_beacon_tick(void) {
+  if (led_mode != LED_BEACON)
+    return;
+  led_hw_on();
+  _delay_ms(150);
   led_hw_off();
 }
 
@@ -756,6 +766,8 @@ int main(void) {
           tc = 1250;
         reg_temperature = tc;
       }
+
+      led_beacon_tick(); /* blink in BEACON mode */
     }
 
     /* Loop pacing: 100µs/iter → 30000 × 100µs ≈ 3s between measurements.
