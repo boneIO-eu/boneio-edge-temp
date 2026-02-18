@@ -1,46 +1,53 @@
 #!/bin/bash
-# Install AVR toolchain + ATtiny402 support on Ubuntu/Debian.
+# Install AVR toolchain (avr-gcc 15.1.0) + pymcuprog on Ubuntu/Debian.
 # Usage: ./setup_toolchain.sh
 set -euo pipefail
 
-echo "=== Installing AVR toolchain ==="
+AVR_GCC_VERSION="15.2.0"
+AVR_GCC_URL="https://github.com/ZakKemble/avr-gcc-build/releases/download/v${AVR_GCC_VERSION}-1/avr-gcc-${AVR_GCC_VERSION}-x64-linux.tar.bz2"
+#https://github.com/ZakKemble/avr-gcc-build/releases/download/v15.2.0-1/avr-gcc-15.2.0-x64-linux.tar.bz2
+INSTALL_DIR="/opt/avr-gcc-${AVR_GCC_VERSION}"
+
+echo "=== Installing AVR toolchain (avr-gcc ${AVR_GCC_VERSION}) ==="
 sudo apt-get update
-sudo apt-get install -y gcc-avr avr-libc binutils-avr python3-pip unzip wget
-pip install --user pymcuprog
+sudo apt-get install -y python3-pip wget
+
+if [ -x "${INSTALL_DIR}/bin/avr-gcc" ]; then
+    echo "avr-gcc ${AVR_GCC_VERSION} already installed ✓"
+else
+    echo "Downloading avr-gcc ${AVR_GCC_VERSION}..."
+    wget -q --show-progress "$AVR_GCC_URL" -O /tmp/avr-gcc.tar.bz2
+    sudo mkdir -p "$INSTALL_DIR"
+    sudo tar xjf /tmp/avr-gcc.tar.bz2 -C "$INSTALL_DIR" --strip-components=1
+    rm /tmp/avr-gcc.tar.bz2
+    echo "avr-gcc ${AVR_GCC_VERSION} installed to ${INSTALL_DIR} ✓"
+fi
+
+export PATH="${INSTALL_DIR}/bin:$PATH"
 
 echo ""
-echo "=== Checking ATtiny402 support ==="
-GCC_DIR=$(find /usr/lib/gcc/avr -maxdepth 1 -type d | tail -1)
-
-if [ -f "$GCC_DIR/device-specs/specs-attiny402" ]; then
-    echo "ATtiny402 device specs already installed ✓"
-else
-    echo "ATtiny402 device specs not found — installing Microchip ATtiny DFP..."
-
-    DFP_URL="https://packs.download.microchip.com/Microchip.ATtiny_DFP.3.1.260.atpack"
-    TMP="/tmp/attiny-dfp"
-
-    wget -q --show-progress "$DFP_URL" -O /tmp/attiny-dfp.zip
-    mkdir -p "$TMP"
-    unzip -qo /tmp/attiny-dfp.zip -d "$TMP"
-
-    sudo cp "$TMP/gcc/dev/attiny402/device-specs/specs-attiny402" "$GCC_DIR/device-specs/"
-    sudo cp "$TMP/include/avr/iotn402.h" /usr/lib/avr/include/avr/
-    sudo mkdir -p /usr/lib/avr/lib/avrxmega3/short-calls
-    sudo cp "$TMP"/gcc/dev/attiny402/avrxmega3/*.{a,o} /usr/lib/avr/lib/avrxmega3/ 2>/dev/null || true
-    sudo cp "$TMP"/gcc/dev/attiny402/avrxmega3/short-calls/*.{a,o} /usr/lib/avr/lib/avrxmega3/short-calls/ 2>/dev/null || true
-
-    rm -rf /tmp/attiny-dfp.zip "$TMP"
-    echo "ATtiny DFP installed ✓"
-fi
+echo "=== Installing pymcuprog ==="
+pip install --user pymcuprog
 
 echo ""
 echo "=== Verification ==="
 avr-gcc --version | head -1
-echo -n "ATtiny402 specs: "
-[ -f "$GCC_DIR/device-specs/specs-attiny402" ] && echo "OK ✓" || echo "MISSING ✗"
 echo -n "pymcuprog: "
 pymcuprog --version 2>/dev/null || echo "MISSING (run: pip install pymcuprog)"
+
+# Add to PATH permanently if not already there
+PATH_LINE="export PATH=${INSTALL_DIR}/bin:\$PATH"
+SHELL_RC="$HOME/.bashrc"
+[ -f "$HOME/.profile" ] && [ ! -f "$HOME/.bashrc" ] && SHELL_RC="$HOME/.profile"
+
+if grep -qF "${INSTALL_DIR}/bin" "$SHELL_RC" 2>/dev/null; then
+    echo "PATH already configured in ${SHELL_RC} ✓"
+else
+    echo "" >> "$SHELL_RC"
+    echo "# AVR toolchain (avr-gcc ${AVR_GCC_VERSION})" >> "$SHELL_RC"
+    echo "$PATH_LINE" >> "$SHELL_RC"
+    echo "Added to ${SHELL_RC} ✓ (restart shell or run: source ${SHELL_RC})"
+fi
 
 echo ""
 echo "=== Done! ==="

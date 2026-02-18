@@ -21,14 +21,15 @@ Defaults: address **1**, baud **9600**, LED **auto**.
 
 ### Requirements
 
-- `avr-gcc` + `avr-libc`
+- `avr-gcc` 15.1.0 + `avr-libc` (installed automatically by `setup_toolchain.sh`)
 - `pymcuprog` or `avrdude` ≥ 7.x (for UPDI flashing)
 
 ### Linux (Ubuntu/Debian)
 
 ```bash
-# One-command install (gcc-avr + avr-libc + ATtiny402 DFP + pymcuprog)
+# One-command install (avr-gcc 15.1.0 + avr-libc + pymcuprog)
 ./setup_toolchain.sh
+export PATH=/opt/avr-gcc-15.1.0/bin:$PATH
 
 make            # compile
 make size       # check size (max 4KB flash / 256B RAM)
@@ -128,9 +129,9 @@ Domyślnie: adres **1**, baudrate **9600**, LED **auto**.
 ## Kompilacja i flashowanie
 
 ```bash
-# Instalacja toolchaina
-sudo apt install gcc-avr avr-libc
-pip install pymcuprog
+# Instalacja toolchaina (avr-gcc 15.1.0)
+./setup_toolchain.sh
+export PATH=/opt/avr-gcc-15.1.0/bin:$PATH
 
 # Kompilacja
 make

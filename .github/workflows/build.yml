@@ -8,8 +8,9 @@ on:
     branches: [main]
 
 env:
-  DFP_VERSION: "3.1.260"
-  DFP_URL: "https://packs.download.microchip.com/Microchip.ATtiny_DFP.3.1.260.atpack"
+  AVR_GCC_VERSION: "15.2.0"
+  AVR_GCC_URL: "https://github.com/ZakKemble/avr-gcc-build/releases/download/v15.2.0-1/avr-gcc-15.2.0-x64-linux.tar.bz2"
+  INSTALL_DIR: "/opt/avr-gcc-15.2.0"
 
 jobs:
   build:
@@ -19,26 +20,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install AVR toolchain + ATtiny DFP
+      - name: Cache AVR toolchain
+        id: cache-avr
+        uses: actions/cache@v4
+        with:
+          path: /opt/avr-gcc-15.2.0
+          key: avr-gcc-15.2.0
+
+      - name: Install AVR toolchain
+        if: steps.cache-avr.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-avr avr-libc binutils-avr
-          avr-gcc --version
+          wget -q "$AVR_GCC_URL" -O /tmp/avr-gcc.tar.bz2
+          sudo mkdir -p "$INSTALL_DIR"
+          sudo tar xjf /tmp/avr-gcc.tar.bz2 -C "$INSTALL_DIR" --strip-components=1
+          rm /tmp/avr-gcc.tar.bz2
 
-          # ATtiny402 needs device specs from Microchip ATtiny DFP
-          wget -q "$DFP_URL" -O /tmp/attiny-dfp.zip
-          mkdir -p /tmp/attiny-dfp
-          unzip -q /tmp/attiny-dfp.zip -d /tmp/attiny-dfp
+      - name: Add AVR toolchain to PATH
+        run: echo "${INSTALL_DIR}/bin" >> $GITHUB_PATH
 
-          # Find gcc specs directory
-          GCC_DIR=$(find /usr/lib/gcc/avr -maxdepth 1 -type d | tail -1)
-
-          # Copy device specs, headers, and libs
-          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/device-specs/specs-attiny402 "$GCC_DIR/device-specs/"
-          sudo cp /tmp/attiny-dfp/include/avr/iotn402.h /usr/lib/avr/include/avr/
-          sudo mkdir -p /usr/lib/avr/lib/avrxmega3/short-calls
-          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/avrxmega3/*.{a,o} /usr/lib/avr/lib/avrxmega3/ 2>/dev/null || true
-          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/avrxmega3/short-calls/*.{a,o} /usr/lib/avr/lib/avrxmega3/short-calls/ 2>/dev/null || true
+      - name: Verify toolchain
+        run: avr-gcc --version
 
       - name: Build firmware
         run: make
@@ -63,19 +64,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install AVR toolchain + ATtiny DFP
+      - name: Cache AVR toolchain
+        id: cache-avr
+        uses: actions/cache@v4
+        with:
+          path: /opt/avr-gcc-15.1.0
+          key: avr-gcc-15.1.0
+
+      - name: Install AVR toolchain
+        if: steps.cache-avr.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-avr avr-libc binutils-avr
-          wget -q "$DFP_URL" -O /tmp/attiny-dfp.zip
-          mkdir -p /tmp/attiny-dfp
-          unzip -q /tmp/attiny-dfp.zip -d /tmp/attiny-dfp
-          GCC_DIR=$(find /usr/lib/gcc/avr -maxdepth 1 -type d | tail -1)
-          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/device-specs/specs-attiny402 "$GCC_DIR/device-specs/"
-          sudo cp /tmp/attiny-dfp/include/avr/iotn402.h /usr/lib/avr/include/avr/
-          sudo mkdir -p /usr/lib/avr/lib/avrxmega3/short-calls
-          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/avrxmega3/*.{a,o} /usr/lib/avr/lib/avrxmega3/ 2>/dev/null || true
-          sudo cp /tmp/attiny-dfp/gcc/dev/attiny402/avrxmega3/short-calls/*.{a,o} /usr/lib/avr/lib/avrxmega3/short-calls/ 2>/dev/null || true
+          wget -q "$AVR_GCC_URL" -O /tmp/avr-gcc.tar.bz2
+          sudo mkdir -p "$INSTALL_DIR"
+          sudo tar xjf /tmp/avr-gcc.tar.bz2 -C "$INSTALL_DIR" --strip-components=1
+          rm /tmp/avr-gcc.tar.bz2
+
+      - name: Add AVR toolchain to PATH
+        run: echo "${INSTALL_DIR}/bin" >> $GITHUB_PATH
 
       - name: Build firmware
         run: make
