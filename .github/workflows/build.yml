@@ -18,11 +18,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache AVR toolchain
         id: cache-avr
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /opt/avr-gcc-15.2.0
           key: avr-gcc-15.2.0
@@ -48,7 +48,7 @@ jobs:
         run: make size
 
       - name: Upload HEX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sht40_modbus-${{ github.sha }}
           path: sht40_modbus.hex
@@ -62,14 +62,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Cache AVR toolchain
         id: cache-avr
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
-          path: /opt/avr-gcc-15.1.0
-          key: avr-gcc-15.1.0
+          path: /opt/avr-gcc-15.2.0
+          key: avr-gcc-15.2.0
 
       - name: Install AVR toolchain
         if: steps.cache-avr.outputs.cache-hit != 'true'
